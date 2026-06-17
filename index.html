@@ -1,29 +1,50 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Decor Mebel Admin</title>
-  <link rel="stylesheet" href="style.css">
-</head>
 <body>
 
-<h1>Заявки Decor Mebel</h1>
+<div class="container">
 
-<table id="leadsTable">
-  <thead>
-    <tr>
-      <th>Дата</th>
-      <th>Имя</th>
-      <th>Телефон</th>
-      <th>Проект</th>
-      <th>Бюджет</th>
-      <th>Комментарий</th>
-    </tr>
-  </thead>
+  <div class="header">
+    <div>
+      <p class="subtitle">Decor Mebel KZ</p>
+      <h1>Заявки клиентов</h1>
+    </div>
+  </div>
 
-  <tbody></tbody>
-</table>
+  <div class="stats">
+    <div class="card">
+      <span>Всего заявок</span>
+      <strong id="totalLeads">0</strong>
+    </div>
+
+    <div class="card">
+      <span>Новые</span>
+      <strong id="newLeads">0</strong>
+    </div>
+
+    <div class="card">
+      <span>Сегодня</span>
+      <strong id="todayLeads">0</strong>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table id="leadsTable">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Имя</th>
+          <th>Телефон</th>
+          <th>Проект</th>
+          <th>Бюджет</th>
+          <th>Комментарий</th>
+        </tr>
+      </thead>
+
+      <tbody></tbody>
+    </table>
+  </div>
+
+</div>
 
 <script src="app.js"></script>
+
 </body>
-</html>
