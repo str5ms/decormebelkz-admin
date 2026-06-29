@@ -3,25 +3,37 @@ const API_URL =
 
 let allLeads = [];
 
+/* ===========================
+   Загрузка заявок
+=========================== */
+
 async function loadLeads() {
 
     const tbody = document.querySelector("#leadsTable tbody");
 
     tbody.innerHTML = `
-    <tr>
-        <td colspan="7" class="loading">
-            Загрузка заявок...
-        </td>
-    </tr>`;
+        <tr>
+            <td colspan="7" class="loading">
+                Загрузка заявок...
+            </td>
+        </tr>
+    `;
 
-    try{
+    try {
 
         const response = await fetch(API_URL);
 
-        allLeads = await response.json();
+        if (!response.ok) {
+            throw new Error("Ошибка загрузки");
+        }
 
-        allLeads.sort((a,b)=>
-            new Date(b.createdAt)-new Date(a.createdAt)
+        const data = await response.json();
+
+        allLeads = Array.isArray(data) ? data : [];
+
+        allLeads.sort((a, b) =>
+            new Date(b.createdAt || 0) -
+            new Date(a.createdAt || 0)
         );
 
         updateStats();
@@ -30,14 +42,15 @@ async function loadLeads() {
 
     }
 
-    catch(error){
+    catch (error) {
 
-        tbody.innerHTML=`
-        <tr>
-            <td colspan="7">
-                Не удалось загрузить заявки
-            </td>
-        </tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty">
+                    ❌ Не удалось загрузить заявки
+                </td>
+            </tr>
+        `;
 
         console.error(error);
 
@@ -45,30 +58,254 @@ async function loadLeads() {
 
 }
 
-function renderTable(leads){
+/* ===========================
+   Отрисовка таблицы
+=========================== */
 
-    const tbody=document.querySelector("#leadsTable tbody");
+function renderTable(leads) {
 
-    tbody.innerHTML="";
+    const tbody = document.querySelector("#leadsTable tbody");
 
-    if(leads.length===0){
+    if (!leads.length) {
 
-        tbody.innerHTML=`
-        <tr>
-            <td colspan="7">
-                Пока нет заявок
-            </td>
-        </tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty">
+                    📭 Пока нет заявок
+                </td>
+            </tr>
+        `;
 
         return;
 
     }
 
-    leads.forEach(lead=>{
+    let html = "";
 
-        const phone=lead.phone.replace(/\D/g,"");
+    leads.forEach(lead => {
 
-        tbody.innerHTML+=`
+        const phone = (lead.phone || "").replace(/\D/g, "");
+
+        html += `
+        <tr>
+
+            <td>
+                ${formatDate(lead.createdAt)}
+            </td>
+
+            <td>
+                <strong>${lead.name || "-"}</strong>
+            </td>
+
+            <td>
+
+                ${
+                    phone
+                    ?
+                    `<a href="tel:${phone}">
+                        ${lead.phone}
+                    </a>`
+                    :
+                    "-"
+                }
+
+            </td>
+
+            <td>
+                ${lead.project || "-"}
+            </td>
+
+            <td>
+                ${lead.budget || "-"}
+            </td>
+
+            <td>
+                ${lead.message || "-"}
+            </td>
+
+            <td>
+
+                <div class="actions">
+
+                    ${
+                        phone
+                        ?
+                        `
+                        <a
+                            class="call"
+                            href="tel:${phone}"
+                            title="Позвонить">
+                            📞
+                        </a>
+
+                        <a
+                            class="wa"
+                            href="https://wa.me/${phone}"
+                            target="_blank"
+                            title="WhatsApp">
+                            💬
+                        </a>
+                        `
+                        :
+                        "-"
+                    }
+
+                </div>
+
+            </td>
+
+        </tr>
+        `;
+
+    });
+
+    tbody.innerHTML = html;
+
+}
+
+/* ===========================
+   Формат даты
+=========================== */
+
+function formatDate(date) {
+
+    if (!date) return "-";
+
+    const d = new Date(date);
+
+    if (isNaN(d)) return "-";
+
+    return d.toLocaleString("ru-RU", {
+
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+
+        hour: "2-digit",
+        minute: "2-digit"
+
+    });
+
+}
+
+/* ===========================
+   Статистика
+=========================== */
+
+function updateStats() {
+
+    document.getElementById("totalLeads").textContent = allLeads.length;
+
+    const today = new Date();
+
+    const todayCount = allLeads.filter(lead => {
+
+        const d = new Date(lead.createdAt);
+
+        return d.toDateString() === today.toDateString();
+
+    }).length;
+
+    document.getElementById("todayLeads").textContent = todayCount;
+
+    const weekAgo = new Date();
+
+    weekAgo.setDate(today.getDate() - 7);
+
+    const weekCount = allLeads.filter(lead => {
+
+        return new Date(lead.createdAt) >= weekAgo;
+
+    }).length;
+
+    document.getElementById("weekLeads").textContent = weekCount;
+
+    const monthCount = allLeads.filter(lead => {
+
+        const d = new Date(lead.createdAt);
+
+        return (
+            d.getMonth() === today.getMonth() &&
+            d.getFullYear() === today.getFullYear()
+        );
+
+    }).length;
+
+    document.getElementById("monthLeads").textContent = monthCount;
+
+}
+
+/* ===========================
+   Поиск
+=========================== */
+
+function searchLeads() {
+
+    const value = document
+        .getElementById("search")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const filtered = allLeads.filter(lead => {
+
+        return (
+
+            (lead.name || "")
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            (lead.phone || "")
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            (lead.project || "")
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            (lead.budget || "")
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            (lead.message || "")
+                .toLowerCase()
+                .includes(value)
+
+        );
+
+    });
+
+    renderTable(filtered);
+
+}
+
+/* ===========================
+   Кнопки
+=========================== */
+
+document
+    .getElementById("search")
+    .addEventListener("input", searchLeads);
+
+document
+    .getElementById("refresh")
+    .addEventListener("click", loadLeads);
+
+/* ===========================
+   Автозагрузка
+=========================== */
+
+loadLeads();
+
+setInterval(loadLeads, 30000);        tbody.innerHTML+=`
 
 <tr>
 
