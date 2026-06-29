@@ -1,58 +1,199 @@
 <!DOCTYPE html>
-<html lang="ru"> 
+<html lang="ru">
 <head>
+
 <meta charset="UTF-8">
-<title>Decor Mebel Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Decor Mebel KZ | Панель управления</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
+
 <body>
 
 <div class="container">
 
-  <div class="header">
-    <div>
-      <p class="subtitle">Decor Mebel KZ</p>
-      <h1>Заявки клиентов</h1>
-    </div>
-  </div>
+<header class="header">
 
-  <div class="stats">
-    <div class="card">
-      <span>Всего заявок</span>
-      <strong id="totalLeads">0</strong>
-    </div>
+<div>
 
-    <div class="card">
-      <span>Новые</span>
-      <strong id="newLeads">0</strong>
-    </div>
+<p class="subtitle">
+Decor Mebel KZ
+</p>
 
-    <div class="card">
-      <span>Сегодня</span>
-      <strong id="todayLeads">0</strong>
-    </div>
-  </div>
+<h1>
+Панель управления заявками
+</h1>
 
-  <div class="table-card">
-    <table id="leadsTable">
-      <thead>
-        <tr>
-          <th>Дата</th>
-          <th>Имя</th>
-          <th>Телефон</th>
-          <th>Проект</th>
-          <th>Бюджет</th>
-          <th>Комментарий</th>
-        </tr>
-      </thead>
+</div>
 
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="toolbar">
+
+<input
+type="text"
+id="search"
+placeholder="🔍 Поиск по имени, телефону, проекту..."
+autocomplete="off">
+
+<button
+id="refresh">
+
+🔄 Обновить
+
+</button>
+
+</div>
+
+</header>
+
+<section class="stats">
+
+<div class="card">
+
+<span>
+
+Всего заявок
+
+</span>
+
+<strong id="totalLeads">
+
+0
+
+</strong>
+
+</div>
+
+<div class="card">
+
+<span>
+
+Сегодня
+
+</span>
+
+<strong id="todayLeads">
+
+0
+
+</strong>
+
+</div>
+
+<div class="card">
+
+<span>
+
+За неделю
+
+</span>
+
+<strong id="weekLeads">
+
+0
+
+</strong>
+
+</div>
+
+<div class="card">
+
+<span>
+
+За месяц
+
+</span>
+
+<strong id="monthLeads">
+
+0
+
+</strong>
+
+</div>
+
+</section>
+
+<section class="table-card">
+
+<table id="leadsTable">
+
+<thead>
+
+<tr>
+
+<th style="width:160px;">
+Дата
+</th>
+
+<th style="width:180px;">
+Клиент
+</th>
+
+<th style="width:170px;">
+Телефон
+</th>
+
+<th style="width:170px;">
+Проект
+</th>
+
+<th style="width:160px;">
+Бюджет
+</th>
+
+<th>
+Комментарий
+</th>
+
+<th style="width:90px;">
+Связь
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td colspan="7">
+
+Загрузка...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</section>
+
+<footer class="footer">
+
+<span>
+
+© 2026 Decor Mebel KZ
+
+</span>
+
+<span>
+
+CRM Admin Panel
+
+</span>
+
+</footer>
 
 </div>
 
 <script src="app.js"></script>
 
 </body>
+
 </html>
