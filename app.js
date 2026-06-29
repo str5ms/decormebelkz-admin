@@ -1,5 +1,5 @@
 const API_URL =
-"https://script.google.com/macros/s/AKfycbwv0jTKV2cWw-wB9DyhncSr3P3I32yIbtHwsr_mGYfjesHaXmsL4QzBEwXMsWM-l6AGiw/exec";
+"https://script.google.com/macros/s/AKfycbynFkaT0LCPYz5NiK__CWfoJ8dSQ6-8nz9ZzzgtAipnnxb51P4T8sj9d9BSe1TL3qDVgw/exec";
 
 let allLeads = [];
 
@@ -14,27 +14,33 @@ async function loadLeads() {
     tbody.innerHTML = `
         <tr>
             <td colspan="7" class="loading">
-                Загрузка заявок...
+                ⏳ Загрузка заявок...
             </td>
         </tr>
     `;
 
     try {
 
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL, {
+            cache: "no-store"
+        });
 
         if (!response.ok) {
-            throw new Error("Ошибка загрузки");
+            throw new Error(`Ошибка ${response.status}`);
         }
 
         const data = await response.json();
 
         allLeads = Array.isArray(data) ? data : [];
 
-        allLeads.sort((a, b) =>
-            new Date(b.createdAt || 0) -
-            new Date(a.createdAt || 0)
-        );
+        allLeads.sort((a, b) => {
+
+            const first = new Date(b.createdAt || 0);
+            const second = new Date(a.createdAt || 0);
+
+            return first - second;
+
+        });
 
         updateStats();
 
@@ -44,6 +50,8 @@ async function loadLeads() {
 
     catch (error) {
 
+        console.error(error);
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty">
@@ -52,14 +60,12 @@ async function loadLeads() {
             </tr>
         `;
 
-        console.error(error);
-
     }
 
 }
 
 /* ===========================
-   Отрисовка таблицы
+   Таблица
 =========================== */
 
 function renderTable(leads) {
@@ -84,85 +90,102 @@ function renderTable(leads) {
 
     leads.forEach(lead => {
 
-        const phone = (lead.phone || "").replace(/\D/g, "");
+        const phone = (lead.phone || "")
+            .replace(/\D/g, "");
 
         html += `
-        <tr>
 
-            <td>
-                ${formatDate(lead.createdAt)}
-            </td>
+<tr>
 
-            <td>
-                <strong>${lead.name || "-"}</strong>
-            </td>
+<td>
 
-            <td>
+${formatDate(lead.createdAt)}
 
-                ${
-                    phone
-                    ?
-                    `<a href="tel:${phone}">
-                        ${lead.phone}
-                    </a>`
-                    :
-                    "-"
-                }
+</td>
 
-            </td>
+<td>
 
-            <td>
-                ${lead.project || "-"}
-            </td>
+<strong>${lead.name || "-"}</strong>
 
-            <td>
-                ${lead.budget || "-"}
-            </td>
+</td>
 
-            <td>
-                ${lead.message || "-"}
-            </td>
+<td>
 
-            <td>
+${
+phone
+?
+`<a href="tel:${phone}">
+${lead.phone}
+</a>`
+:
+"-"
+}
 
-                <div class="actions">
+</td>
 
-                    ${
-                        phone
-                        ?
-                        `
-                        <a
-                            class="call"
-                            href="tel:${phone}"
-                            title="Позвонить">
-                            📞
-                        </a>
+<td>
 
-                        <a
-                            class="wa"
-                            href="https://wa.me/${phone}"
-                            target="_blank"
-                            title="WhatsApp">
-                            💬
-                        </a>
-                        `
-                        :
-                        "-"
-                    }
+${lead.project || "-"}
 
-                </div>
+</td>
 
-            </td>
+<td>
 
-        </tr>
-        `;
+${lead.budget || "-"}
+
+</td>
+
+<td>
+
+${lead.message || "-"}
+
+</td>
+
+<td>
+
+<div class="actions">
+
+${
+phone
+?
+`
+<a
+class="call"
+href="tel:${phone}"
+title="Позвонить">
+
+📞
+
+</a>
+
+<a
+class="wa"
+href="https://wa.me/${phone}"
+target="_blank"
+rel="noopener noreferrer"
+title="WhatsApp">
+
+💬
+
+</a>
+`
+:
+"-"
+}
+
+</div>
+
+</td>
+
+</tr>
+
+`;
 
     });
 
     tbody.innerHTML = html;
 
 }
-
 /* ===========================
    Формат даты
 =========================== */
@@ -173,17 +196,16 @@ function formatDate(date) {
 
     const d = new Date(date);
 
-    if (isNaN(d)) return "-";
+    if (isNaN(d.getTime())) {
+        return date;
+    }
 
     return d.toLocaleString("ru-RU", {
-
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
-
         hour: "2-digit",
         minute: "2-digit"
-
     });
 
 }
@@ -194,25 +216,34 @@ function formatDate(date) {
 
 function updateStats() {
 
-    document.getElementById("totalLeads").textContent = allLeads.length;
+    const total = allLeads.length;
+
+    document.getElementById("totalLeads").textContent = total;
 
     const today = new Date();
 
     const todayCount = allLeads.filter(lead => {
 
+        if (!lead.createdAt) return false;
+
         const d = new Date(lead.createdAt);
 
-        return d.toDateString() === today.toDateString();
+        return (
+            d.getDate() === today.getDate() &&
+            d.getMonth() === today.getMonth() &&
+            d.getFullYear() === today.getFullYear()
+        );
 
     }).length;
 
     document.getElementById("todayLeads").textContent = todayCount;
 
     const weekAgo = new Date();
-
     weekAgo.setDate(today.getDate() - 7);
 
     const weekCount = allLeads.filter(lead => {
+
+        if (!lead.createdAt) return false;
 
         return new Date(lead.createdAt) >= weekAgo;
 
@@ -221,6 +252,8 @@ function updateStats() {
     document.getElementById("weekLeads").textContent = weekCount;
 
     const monthCount = allLeads.filter(lead => {
+
+        if (!lead.createdAt) return false;
 
         const d = new Date(lead.createdAt);
 
@@ -247,35 +280,25 @@ function searchLeads() {
         .trim()
         .toLowerCase();
 
+    if (!value) {
+        renderTable(allLeads);
+        return;
+    }
+
     const filtered = allLeads.filter(lead => {
 
-        return (
+        return [
 
-            (lead.name || "")
-                .toLowerCase()
-                .includes(value)
+            lead.name,
+            lead.phone,
+            lead.project,
+            lead.budget,
+            lead.message,
+            lead.createdAt
 
-            ||
+        ].some(field =>
 
-            (lead.phone || "")
-                .toLowerCase()
-                .includes(value)
-
-            ||
-
-            (lead.project || "")
-                .toLowerCase()
-                .includes(value)
-
-            ||
-
-            (lead.budget || "")
-                .toLowerCase()
-                .includes(value)
-
-            ||
-
-            (lead.message || "")
+            String(field || "")
                 .toLowerCase()
                 .includes(value)
 
@@ -286,204 +309,94 @@ function searchLeads() {
     renderTable(filtered);
 
 }
-
 /* ===========================
-   Кнопки
+   Обработчики
 =========================== */
 
-document
-    .getElementById("search")
-    .addEventListener("input", searchLeads);
+const searchInput = document.getElementById("search");
+const refreshButton = document.getElementById("refresh");
 
-document
-    .getElementById("refresh")
-    .addEventListener("click", loadLeads);
+if (searchInput) {
+
+    searchInput.addEventListener("input", searchLeads);
+
+}
+
+if (refreshButton) {
+
+    refreshButton.addEventListener("click", loadLeads);
+
+}
 
 /* ===========================
-   Автозагрузка
+   Автообновление
 =========================== */
 
-loadLeads();
+let refreshInterval = null;
 
-setInterval(loadLeads, 30000);        tbody.innerHTML+=`
+function startAutoRefresh() {
 
-<tr>
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
 
-<td>
+    refreshInterval = setInterval(async () => {
 
-${formatDate(lead.createdAt)}
+        const currentSearch = searchInput
+            ? searchInput.value.trim()
+            : "";
 
-</td>
+        await loadLeads();
 
-<td>
+        if (currentSearch && searchInput) {
 
-<strong>${lead.name}</strong>
+            searchInput.value = currentSearch;
+            searchLeads();
 
-</td>
+        }
 
-<td>
-
-<a href="tel:${phone}">
-${lead.phone}
-</a>
-
-</td>
-
-<td>
-
-${lead.project||"-"}
-
-</td>
-
-<td>
-
-${lead.budget||"-"}
-
-</td>
-
-<td>
-
-${lead.message||"-"}
-
-</td>
-
-<td>
-
-<div class="actions">
-
-<a
-class="call"
-href="tel:${phone}"
-title="Позвонить">
-
-📞
-
-</a>
-
-<a
-class="wa"
-href="https://wa.me/${phone}"
-target="_blank"
-title="WhatsApp">
-
-💬
-
-</a>
-
-</div>
-
-</td>
-
-</tr>
-
-`;
-
-    });
+    }, 30000);
 
 }
 
-function formatDate(date){
+/* ===========================
+   Инициализация
+=========================== */
 
-    if(!date) return "-";
+window.addEventListener("DOMContentLoaded", async () => {
 
-    return new Date(date).toLocaleString("ru-RU",{
+    await loadLeads();
 
-        day:"2-digit",
+    startAutoRefresh();
 
-        month:"2-digit",
+});
 
-        year:"numeric",
+/* ===========================
+   Обновление вкладки
+=========================== */
 
-        hour:"2-digit",
+document.addEventListener("visibilitychange", () => {
 
-        minute:"2-digit"
+    if (!document.hidden) {
 
-    });
+        loadLeads();
 
-}
+    }
 
-function updateStats(){
+});
 
-    document.getElementById("totalLeads").textContent=allLeads.length;
+/* ===========================
+   Глобальная обработка ошибок
+=========================== */
 
-    const today=new Date();
+window.addEventListener("error", (event) => {
 
-    const todayString=today.toDateString();
+    console.error("Ошибка:", event.error || event.message);
 
-    const todayCount=allLeads.filter(lead=>
+});
 
-        new Date(lead.createdAt).toDateString()===todayString
+window.addEventListener("unhandledrejection", (event) => {
 
-    ).length;
+    console.error("Promise:", event.reason);
 
-    document.getElementById("todayLeads").textContent=todayCount;
-
-    const weekAgo=new Date();
-
-    weekAgo.setDate(today.getDate()-7);
-
-    const weekCount=allLeads.filter(lead=>
-
-        new Date(lead.createdAt)>=weekAgo
-
-    ).length;
-
-    document.getElementById("weekLeads").textContent=weekCount;
-
-    const monthCount=allLeads.filter(lead=>{
-
-        const d=new Date(lead.createdAt);
-
-        return d.getMonth()===today.getMonth()
-        && d.getFullYear()===today.getFullYear();
-
-    }).length;
-
-    document.getElementById("monthLeads").textContent=monthCount;
-
-}
-
-function searchLeads(){
-
-    const value=document
-    .getElementById("search")
-    .value
-    .toLowerCase();
-
-    const filtered=allLeads.filter(lead=>{
-
-        return (
-
-            lead.name.toLowerCase().includes(value)
-
-            ||
-
-            lead.phone.toLowerCase().includes(value)
-
-            ||
-
-            lead.project.toLowerCase().includes(value)
-
-            ||
-
-            lead.message.toLowerCase().includes(value)
-
-        );
-
-    });
-
-    renderTable(filtered);
-
-}
-
-document
-.getElementById("search")
-.addEventListener("input",searchLeads);
-
-document
-.getElementById("refresh")
-.addEventListener("click",loadLeads);
-
-loadLeads();
-
-setInterval(loadLeads,30000);
+});
